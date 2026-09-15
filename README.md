@@ -87,7 +87,7 @@ UC4 .> UC8 : <<include>>
 UC8 --> Cobranca
 
 UC14 .> UC15 : <<include>>
-UC15 .> UC16 : <<extend>>
+UC16 .> UC15 : <<extend>>
 
 @enduml
 ```
@@ -113,3 +113,66 @@ UC15 .> UC16 : <<extend>>
 | UC15 | Verificar quórum mínimo da disciplina | Sistema | Confere se a disciplina atingiu o mínimo de 3 alunos matriculados |
 | UC16 | Cancelar disciplina sem quórum | Sistema | Cancela automaticamente disciplinas que não atingiram o mínimo de alunos |
 | UC17 | Consultar alunos matriculados | Professor | Lista os alunos matriculados em uma disciplina do professor |
+
+## Histórias de Usuário
+
+Formato: *Como \<ator\>, eu quero \<ação\>, para que \<benefício\>.*
+
+### Aluno
+
+**HU01** — Como aluno, eu quero fazer login no sistema com meu usuário e senha, para que eu possa
+acessar minhas informações de matrícula com segurança.
+
+**HU02** — Como aluno, eu quero consultar as disciplinas ofertadas no semestre, para que eu possa
+escolher em quais irei me matricular.
+
+**HU03** — Como aluno, eu quero me matricular em até 4 disciplinas obrigatórias, para que eu cumpra
+o currículo do meu curso no semestre.
+
+**HU04** — Como aluno, eu quero me matricular em até 2 disciplinas optativas, para que eu complemente
+minha formação com temas de meu interesse.
+
+**HU05** — Como aluno, eu quero ser impedido de me matricular em uma disciplina que já atingiu 60
+alunos, para que eu saiba que preciso escolher outra opção.
+
+**HU06** — Como aluno, eu quero cancelar uma matrícula feita durante o período de matrículas, para que
+eu possa corrigir minha escolha de disciplinas.
+
+**HU07** — Como aluno, eu quero consultar as disciplinas em que estou matriculado, para que eu
+acompanhe minha situação acadêmica no semestre.
+
+**HU08** — Como aluno, eu quero que o sistema de cobrança seja notificado automaticamente após minha
+matrícula, para que eu seja cobrado corretamente pelas disciplinas cursadas.
+
+### Professor
+
+**HU09** — Como professor, eu quero fazer login no sistema com meu usuário e senha, para que eu
+acesse apenas as informações das minhas disciplinas.
+
+**HU10** — Como professor, eu quero consultar a lista de alunos matriculados em cada uma das minhas
+disciplinas, para que eu possa me preparar para o início do semestre.
+
+### Secretaria
+
+**HU11** — Como secretaria, eu quero cadastrar cursos com nome e número de créditos, para que os
+alunos possam ser vinculados a um curso válido.
+
+**HU12** — Como secretaria, eu quero cadastrar disciplinas associadas a um curso e a um professor,
+para que elas possam compor o currículo do semestre.
+
+**HU13** — Como secretaria, eu quero cadastrar professores no sistema, para que eles possam acessar
+suas turmas.
+
+**HU14** — Como secretaria, eu quero gerar o currículo de disciplinas de cada semestre, para que os
+alunos saibam quais disciplinas estarão disponíveis para matrícula.
+
+**HU15** — Como secretaria, eu quero definir o período de matrículas, para que alunos só possam
+matricular ou cancelar disciplinas dentro da janela permitida.
+
+**HU16** — Como secretaria, eu quero que o sistema verifique automaticamente, ao final do período de
+matrículas, se cada disciplina atingiu o mínimo de 3 alunos, para que disciplinas sem quórum sejam
+canceladas automaticamente.
+
+**HU17** — Como secretaria, quero encerrar o período de matrículas, para que o sistema dispare a verificação de quórum das disciplinas
+
+---
