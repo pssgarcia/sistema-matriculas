@@ -24,6 +24,9 @@ que a secretaria administre cursos, disciplinas e períodos de matrícula.
 
 ## Diagrama de Casos de Uso
 
+<img width="719" height="1550" alt="image" src="https://github.com/user-attachments/assets/897eff51-0e48-4938-b900-aee04aead64a" />
+
+
 Código em PlantUML (pode ser renderizado em [plantuml.com](http://www.plantuml.com/plantuml/uml/) ou
 via extensão do VS Code — recomendo exportar a imagem gerada e versionar no repositório em
 `/docs/diagramas/`).
