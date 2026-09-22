@@ -9,6 +9,7 @@
 - [Histórias de Usuário](#histórias-de-usuário)
 - [Diagrama de Classes](#diagrama-de-classes)
 - [Regras de Negócio no Modelo](#regras-de-negócio-no-modelo)
+- [Projeto Java](#projeto-java)
 
 ## Visão Geral
 
@@ -277,5 +278,59 @@ Fonte PlantUML: [`docs/diagramas/diagrama-classes.puml`](docs/diagramas/diagrama
 | Matrícula só dentro do período vigente | `PeriodoMatricula.estaAberto()` e `ServicoMatricula.validarPeriodoAberto()` |
 | Cancelamento automático sem quórum | `Disciplina.cancelarPorFaltaDeQuorum()`, disparado por `ServicoSecretaria.encerrarPeriodoMatriculas()` |
 | Notificação da cobrança após matrícula | `SistemaCobranca.notificarMatricula()` |
+
+## Projeto Java
+
+Projeto Maven com Java 17. Nesta etapa as classes contêm **atributos, construtores, acessores e
+stubs dos métodos modelados** — os métodos de negócio lançam `UnsupportedOperationException`.
+
+### Estrutura
+
+```
+sistema-matriculas/
+├── pom.xml
+├── docs/diagramas/
+│   ├── diagrama-casos-de-uso.puml
+│   └── diagrama-classes.puml
+└── src/main/java/matriculas/
+    ├── Aplicacao.java
+    ├── modelo/
+    │   ├── Usuario.java          ├── Curso.java
+    │   ├── Aluno.java            ├── Disciplina.java
+    │   ├── Professor.java        ├── Matricula.java
+    │   ├── Secretaria.java       ├── Curriculo.java
+    │   ├── TipoDisciplina.java   ├── PeriodoMatricula.java
+    │   ├── StatusDisciplina.java └── StatusMatricula.java
+    ├── servico/
+    │   ├── ServicoAutenticacao.java   ├── ServicoSecretaria.java
+    │   └── ServicoMatricula.java      └── ServicoProfessor.java
+    ├── repositorio/
+    │   ├── Repositorio.java              ├── RepositorioDisciplina.java
+    │   ├── RepositorioUsuario.java       ├── RepositorioMatricula.java
+    │   ├── RepositorioCurso.java         ├── RepositorioCurriculo.java
+    │   └── RepositorioPeriodoMatricula.java
+    ├── integracao/
+    │   ├── SistemaCobranca.java
+    │   └── SistemaCobrancaAdapter.java
+    └── excecao/
+        ├── MatriculaException.java              ├── MatriculaDuplicadaException.java
+        ├── AutenticacaoException.java           ├── DisciplinaIndisponivelException.java
+        ├── PeriodoFechadoException.java         ├── EntidadeNaoEncontradaException.java
+        ├── SemVagaDisponivelException.java      └── LimiteDisciplinasExcedidoException.java
+```
+
+### Compilação
+
+```bash
+mvn compile
+mvn exec:java -Dexec.mainClass=matriculas.Aplicacao
+```
+
+Sem Maven instalado:
+
+```bash
+javac -encoding UTF-8 -d target/classes $(find src/main/java -name '*.java')
+java -cp target/classes matriculas.Aplicacao
+```
 
 ---
