@@ -7,6 +7,8 @@
 - [Correções Aplicadas ao Diagrama de Casos de Uso](#correções-aplicadas-ao-diagrama-de-casos-de-uso)
 - [Descrição dos Casos de Uso](#descrição-dos-casos-de-uso)
 - [Histórias de Usuário](#histórias-de-usuário)
+- [Diagrama de Classes](#diagrama-de-classes)
+- [Regras de Negócio no Modelo](#regras-de-negócio-no-modelo)
 
 ## Visão Geral
 
@@ -222,5 +224,58 @@ canceladas automaticamente.
 
 **HU17** — Como secretaria, quero encerrar o período de matrículas, para que o sistema dispare a verificação de quórum das disciplinas
 
+## Diagrama de Classes
+
+Fonte PlantUML: [`docs/diagramas/diagrama-classes.puml`](docs/diagramas/diagrama-classes.puml)
+
+### Pacote `modelo` — entidades do domínio
+
+| Classe | Responsabilidade | Principais atributos |
+|---|---|---|
+| `Usuario` *(abstrata)* | Base de autenticação de todos os perfis | `id`, `nome`, `login`, `senha` |
+| `Aluno` | Matricula-se e cancela matrículas | `matricula`, `curso`, `matriculas` |
+| `Professor` | Consulta suas disciplinas e alunos | `siape`, `departamento`, `disciplinas` |
+| `Secretaria` | Perfil administrativo | `setor` |
+| `Curso` | Curso de graduação | `codigo`, `nome`, `creditos`, `disciplinas` |
+| `Disciplina` | Disciplina ofertada, com controle de vagas e quórum | `codigo`, `nome`, `creditos`, `tipo`, `status`, `professor`, `matriculas` |
+| `Matricula` | Classe associativa entre `Aluno` e `Disciplina` | `dataMatricula`, `dataCancelamento`, `status` |
+| `Curriculo` | Disciplinas ofertadas por um curso num semestre | `semestre`, `curso`, `disciplinas` |
+| `PeriodoMatricula` | Janela em que matrículas são permitidas | `semestre`, `dataInicio`, `dataFim`, `aberto` |
+| `TipoDisciplina` *(enum)* | `OBRIGATORIA(4)`, `OPTATIVA(2)` — carrega o limite por aluno | `limitePorAluno` |
+| `StatusDisciplina` *(enum)* | `PLANEJADA`, `ABERTA`, `CONFIRMADA`, `CANCELADA` | — |
+| `StatusMatricula` *(enum)* | `ATIVA`, `CANCELADA` | — |
+
+### Demais pacotes
+
+| Pacote | Conteúdo |
+|---|---|
+| `servico` | `ServicoAutenticacao`, `ServicoMatricula`, `ServicoSecretaria`, `ServicoProfessor` — orquestram os casos de uso |
+| `repositorio` | `Repositorio<T, ID>` e as interfaces específicas de cada entidade |
+| `integracao` | `SistemaCobranca` (porta para o ator externo) e `SistemaCobrancaAdapter` |
+| `excecao` | `MatriculaException` e as exceções de regra de negócio derivadas dela |
+
+### Relacionamentos e multiplicidades
+
+| Relacionamento | Multiplicidade | Observação |
+|---|---|---|
+| `Aluno` — `Matricula` | 1 para 0..6 | Até 4 obrigatórias + 2 optativas |
+| `Disciplina` — `Matricula` | 1 para 3..60 | Quórum mínimo e limite de vagas |
+| `Aluno` — `Curso` | * para 1 | Aluno pertence a um curso |
+| `Curso` — `Disciplina` | 1 para * | Agregação |
+| `Professor` — `Disciplina` | 1 para * | Professor responsável |
+| `Curriculo` — `Disciplina` | 1 para * | Agregação das disciplinas do semestre |
+| `Usuario` → `Aluno`/`Professor`/`Secretaria` | herança | Generalização dos perfis |
+
+## Regras de Negócio no Modelo
+
+| Regra | Onde está representada |
+|---|---|
+| Máximo de 60 alunos por disciplina | `Disciplina.MAXIMO_ALUNOS` e `Disciplina.temVagaDisponivel()` |
+| Mínimo de 3 alunos por disciplina | `Disciplina.MINIMO_ALUNOS` e `Disciplina.atingiuQuorumMinimo()` |
+| Até 4 disciplinas obrigatórias por aluno | `TipoDisciplina.OBRIGATORIA.getLimitePorAluno()` |
+| Até 2 disciplinas optativas por aluno | `TipoDisciplina.OPTATIVA.getLimitePorAluno()` |
+| Matrícula só dentro do período vigente | `PeriodoMatricula.estaAberto()` e `ServicoMatricula.validarPeriodoAberto()` |
+| Cancelamento automático sem quórum | `Disciplina.cancelarPorFaltaDeQuorum()`, disparado por `ServicoSecretaria.encerrarPeriodoMatriculas()` |
+| Notificação da cobrança após matrícula | `SistemaCobranca.notificarMatricula()` |
 
 ---

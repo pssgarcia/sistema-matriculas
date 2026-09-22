@@ -1,0 +1,270 @@
+@startuml DiagramaClasses
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+package "modelo" {
+
+  abstract class Usuario {
+    - id : Long
+    - nome : String
+    - login : String
+    - senha : String
+    + autenticar(senha : String) : boolean
+    + alterarSenha(senhaAtual : String, novaSenha : String) : void
+    + {abstract} getPerfil() : String
+  }
+
+  class Aluno {
+    - matricula : String
+    + matricularEm(disciplina : Disciplina) : Matricula
+    + cancelarMatricula(disciplina : Disciplina) : void
+    + consultarMatriculasAtivas() : List<Matricula>
+    + consultarDisciplinasMatriculadas() : List<Disciplina>
+    + podeSeMatricularEm(disciplina : Disciplina) : boolean
+    + totalMatriculadasPorTipo(tipo : TipoDisciplina) : int
+    + estaMatriculadoEm(disciplina : Disciplina) : boolean
+  }
+
+  class Professor {
+    - siape : String
+    - departamento : String
+    + consultarAlunosMatriculados(disciplina : Disciplina) : List<Aluno>
+    + consultarDisciplinas() : List<Disciplina>
+    + lecionaDisciplina(disciplina : Disciplina) : boolean
+  }
+
+  class Secretaria {
+    - setor : String
+  }
+
+  class Curso {
+    - id : Long
+    - codigo : String
+    - nome : String
+    - creditos : int
+    + adicionarDisciplina(disciplina : Disciplina) : void
+    + removerDisciplina(disciplina : Disciplina) : void
+    + listarDisciplinasPorTipo(tipo : TipoDisciplina) : List<Disciplina>
+  }
+
+  class Disciplina {
+    + {static} MAXIMO_ALUNOS : int = 60
+    + {static} MINIMO_ALUNOS : int = 3
+    - id : Long
+    - codigo : String
+    - nome : String
+    - creditos : int
+    - tipo : TipoDisciplina
+    - status : StatusDisciplina
+    + temVagaDisponivel() : boolean
+    + atingiuQuorumMinimo() : boolean
+    + getTotalMatriculados() : int
+    + getVagasRestantes() : int
+    + adicionarMatricula(matricula : Matricula) : void
+    + removerMatricula(matricula : Matricula) : void
+    + listarAlunosMatriculados() : List<Aluno>
+    + ativar() : void
+    + cancelarPorFaltaDeQuorum() : void
+    + estaDisponivelParaMatricula() : boolean
+  }
+
+  class Matricula {
+    - id : Long
+    - dataMatricula : LocalDateTime
+    - dataCancelamento : LocalDateTime
+    - status : StatusMatricula
+    + cancelar() : void
+    + estaAtiva() : boolean
+  }
+
+  class Curriculo {
+    - id : Long
+    - semestre : String
+    + adicionarDisciplina(disciplina : Disciplina) : void
+    + removerDisciplina(disciplina : Disciplina) : void
+    + listarDisciplinasComVaga() : List<Disciplina>
+    + contemDisciplina(disciplina : Disciplina) : boolean
+  }
+
+  class PeriodoMatricula {
+    - id : Long
+    - semestre : String
+    - dataInicio : LocalDate
+    - dataFim : LocalDate
+    - aberto : boolean
+    + abrir() : void
+    + encerrar() : void
+    + estaAberto() : boolean
+    + estaVigente(data : LocalDate) : boolean
+  }
+
+  enum TipoDisciplina {
+    OBRIGATORIA
+    OPTATIVA
+    - limitePorAluno : int
+    + getLimitePorAluno() : int
+  }
+
+  enum StatusDisciplina {
+    PLANEJADA
+    ABERTA
+    CONFIRMADA
+    CANCELADA
+  }
+
+  enum StatusMatricula {
+    ATIVA
+    CANCELADA
+  }
+}
+
+package "servico" {
+
+  class ServicoAutenticacao {
+    + autenticar(login : String, senha : String) : Usuario
+    + encerrarSessao(usuario : Usuario) : void
+  }
+
+  class ServicoMatricula {
+    + consultarDisciplinasOfertadas(aluno : Aluno) : List<Disciplina>
+    + matricular(aluno : Aluno, disciplina : Disciplina) : Matricula
+    + cancelarMatricula(aluno : Aluno, disciplina : Disciplina) : void
+    + consultarMatriculas(aluno : Aluno) : List<Matricula>
+    - validarPeriodoAberto() : void
+    - validarDisponibilidadeDeVagas(disciplina : Disciplina) : void
+    - validarLimiteDeDisciplinas(aluno : Aluno, disciplina : Disciplina) : void
+  }
+
+  class ServicoSecretaria {
+    + cadastrarCurso(codigo : String, nome : String, creditos : int) : Curso
+    + cadastrarDisciplina(codigo : String, nome : String, creditos : int, tipo : TipoDisciplina, curso : Curso, professor : Professor) : Disciplina
+    + cadastrarProfessor(nome : String, login : String, senha : String, siape : String, departamento : String) : Professor
+    + cadastrarAluno(nome : String, login : String, senha : String, matricula : String, curso : Curso) : Aluno
+    + gerarCurriculo(curso : Curso, semestre : String, disciplinas : List<Disciplina>) : Curriculo
+    + abrirPeriodoMatriculas(semestre : String, inicio : LocalDate, fim : LocalDate) : PeriodoMatricula
+    + encerrarPeriodoMatriculas(semestre : String) : void
+    + verificarQuoruns(semestre : String) : List<Disciplina>
+  }
+
+  class ServicoProfessor {
+    + consultarDisciplinas(professor : Professor) : List<Disciplina>
+    + consultarAlunosMatriculados(professor : Professor, disciplina : Disciplina) : List<Aluno>
+  }
+}
+
+package "repositorio" {
+
+  interface Repositorio<T, ID> {
+    + salvar(entidade : T) : T
+    + buscarPorId(id : ID) : Optional<T>
+    + buscarTodos() : List<T>
+    + remover(id : ID) : void
+  }
+
+  interface RepositorioUsuario {
+    + buscarPorLogin(login : String) : Optional<Usuario>
+  }
+
+  interface RepositorioCurso {
+    + buscarPorCodigo(codigo : String) : Optional<Curso>
+  }
+
+  interface RepositorioDisciplina {
+    + buscarPorCodigo(codigo : String) : Optional<Disciplina>
+    + buscarPorProfessor(professor : Professor) : List<Disciplina>
+    + buscarPorCurso(curso : Curso) : List<Disciplina>
+  }
+
+  interface RepositorioMatricula {
+    + buscarPorAluno(aluno : Aluno) : List<Matricula>
+    + buscarPorDisciplina(disciplina : Disciplina) : List<Matricula>
+    + buscarPorAlunoEDisciplina(aluno : Aluno, disciplina : Disciplina) : Optional<Matricula>
+  }
+
+  interface RepositorioCurriculo {
+    + buscarPorSemestre(semestre : String) : List<Curriculo>
+    + buscarPorCursoESemestre(curso : Curso, semestre : String) : Optional<Curriculo>
+  }
+
+  interface RepositorioPeriodoMatricula {
+    + buscarPorSemestre(semestre : String) : Optional<PeriodoMatricula>
+    + buscarPeriodoAberto() : Optional<PeriodoMatricula>
+  }
+}
+
+package "integracao" {
+
+  interface SistemaCobranca {
+    + notificarMatricula(matricula : Matricula) : void
+    + notificarCancelamento(matricula : Matricula) : void
+  }
+
+  class SistemaCobrancaAdapter {
+    - urlServico : String
+    + notificarMatricula(matricula : Matricula) : void
+    + notificarCancelamento(matricula : Matricula) : void
+  }
+}
+
+package "excecao" {
+
+  class MatriculaException <<RuntimeException>>
+  class AutenticacaoException
+  class PeriodoFechadoException
+  class SemVagaDisponivelException
+  class LimiteDisciplinasExcedidoException
+  class MatriculaDuplicadaException
+  class DisciplinaIndisponivelException
+  class EntidadeNaoEncontradaException
+}
+
+' ---------- Herança ----------
+Usuario <|-- Aluno
+Usuario <|-- Professor
+Usuario <|-- Secretaria
+
+MatriculaException <|-- AutenticacaoException
+MatriculaException <|-- PeriodoFechadoException
+MatriculaException <|-- SemVagaDisponivelException
+MatriculaException <|-- LimiteDisciplinasExcedidoException
+MatriculaException <|-- MatriculaDuplicadaException
+MatriculaException <|-- DisciplinaIndisponivelException
+MatriculaException <|-- EntidadeNaoEncontradaException
+
+SistemaCobranca <|.. SistemaCobrancaAdapter
+Repositorio <|-- RepositorioUsuario
+Repositorio <|-- RepositorioCurso
+Repositorio <|-- RepositorioDisciplina
+Repositorio <|-- RepositorioMatricula
+Repositorio <|-- RepositorioCurriculo
+Repositorio <|-- RepositorioPeriodoMatricula
+
+' ---------- Associações do domínio ----------
+Aluno "1" -- "0..6" Matricula : realiza >
+Disciplina "1" -- "3..60" Matricula : possui >
+Aluno "*" --> "1" Curso : está vinculado a >
+Curso "1" o-- "*" Disciplina : oferece >
+Professor "1" -- "*" Disciplina : leciona >
+Curriculo "1" o-- "*" Disciplina : compõe >
+Curso "1" -- "*" Curriculo : tem >
+Disciplina --> TipoDisciplina
+Disciplina --> StatusDisciplina
+Matricula --> StatusMatricula
+
+' ---------- Dependências dos serviços ----------
+ServicoAutenticacao ..> RepositorioUsuario
+ServicoMatricula ..> RepositorioMatricula
+ServicoMatricula ..> RepositorioCurriculo
+ServicoMatricula ..> RepositorioPeriodoMatricula
+ServicoMatricula ..> SistemaCobranca
+ServicoSecretaria ..> RepositorioCurso
+ServicoSecretaria ..> RepositorioDisciplina
+ServicoSecretaria ..> RepositorioUsuario
+ServicoSecretaria ..> RepositorioCurriculo
+ServicoSecretaria ..> RepositorioPeriodoMatricula
+ServicoProfessor ..> RepositorioDisciplina
+ServicoProfessor ..> RepositorioMatricula
+
+@enduml
