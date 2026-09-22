@@ -1,0 +1,88 @@
+@startuml DiagramaCasosDeUso
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor Usuario as "Usuário"
+actor Aluno
+actor Professor
+actor Secretaria
+actor "Sistema de Cobrança" as Cobranca
+
+Aluno --|> Usuario
+Professor --|> Usuario
+Secretaria --|> Usuario
+
+rectangle "Sistema de Matrículas" {
+
+  usecase "Autenticar no sistema" as UC1
+  usecase "Consultar disciplinas ofertadas" as UC2
+  usecase "Matricular-se em disciplina" as UC3
+  usecase "Matricular-se em disciplina obrigatória" as UC3A
+  usecase "Matricular-se em disciplina optativa" as UC3B
+  usecase "Cancelar matrícula" as UC4
+  usecase "Consultar matrículas realizadas" as UC5
+
+  usecase "Verificar disponibilidade de vagas" as UC6
+  usecase "Validar limite de disciplinas do aluno" as UC7
+  usecase "Notificar sistema de cobrança" as UC8
+
+  usecase "Cadastrar curso" as UC9
+  usecase "Cadastrar disciplina" as UC10
+  usecase "Cadastrar professor" as UC11
+  usecase "Cadastrar aluno" as UC12
+  usecase "Gerar currículo do semestre" as UC13
+  usecase "Abrir período de matrículas" as UC14
+  usecase "Encerrar período de matrículas" as UC15
+  usecase "Verificar quórum mínimo da disciplina" as UC16
+  usecase "Cancelar disciplina sem quórum" as UC17
+
+  usecase "Consultar alunos matriculados" as UC18
+}
+
+Usuario --> UC1
+
+Aluno --> UC2
+Aluno --> UC3
+Aluno --> UC4
+Aluno --> UC5
+
+Professor --> UC18
+
+Secretaria --> UC9
+Secretaria --> UC10
+Secretaria --> UC11
+Secretaria --> UC12
+Secretaria --> UC13
+Secretaria --> UC14
+Secretaria --> UC15
+
+UC3A --|> UC3
+UC3B --|> UC3
+
+UC3 ..> UC6 : <<include>>
+UC3 ..> UC7 : <<include>>
+UC3 ..> UC8 : <<include>>
+UC4 ..> UC8 : <<include>>
+
+UC15 ..> UC16 : <<include>>
+UC17 ..> UC16 : <<extend>>
+
+UC8 --> Cobranca
+
+note right of UC6
+  Máximo de 60 alunos
+  por disciplina
+end note
+
+note right of UC7
+  Até 4 obrigatórias e
+  2 optativas por aluno
+end note
+
+note bottom of UC16
+  Mínimo de 3 alunos
+  por disciplina
+end note
+
+@enduml
