@@ -9,7 +9,7 @@
 - [Histórias de Usuário](#histórias-de-usuário)
 - [Diagrama de Classes](#diagrama-de-classes)
 - [Regras de Negócio no Modelo](#regras-de-negócio-no-modelo)
-- [Projeto Java](#projeto-java)
+- [Protótipo (Lab01S03)](#protótipo-lab01s03)
 
 ## Visão Geral
 
@@ -28,106 +28,11 @@ que a secretaria administre cursos, disciplinas e períodos de matrícula.
 
 ## Diagrama de Casos de Uso
 
-<img width="719" height="1550" alt="image" src="https://github.com/user-attachments/assets/897eff51-0e48-4938-b900-aee04aead64a" />
+![Diagrama de casos de uso](docs/diagramas/DiagramaCasosDeUso.png)
 
-
-> A imagem acima corresponde à versão anterior do diagrama. A versão corrigida está em
-> [`docs/diagramas/diagrama-casos-de-uso.puml`](docs/diagramas/diagrama-casos-de-uso.puml) e deve ser
-> reexportada para substituir a imagem.
-
-Código em PlantUML (pode ser renderizado em [plantuml.com](http://www.plantuml.com/plantuml/uml/) ou
-via extensão do VS Code).
-
-```plantuml
-@startuml DiagramaCasosDeUso
-
-left to right direction
-skinparam packageStyle rectangle
-
-actor Usuario as "Usuário"
-actor Aluno
-actor Professor
-actor Secretaria
-actor "Sistema de Cobrança" as Cobranca
-
-Aluno --|> Usuario
-Professor --|> Usuario
-Secretaria --|> Usuario
-
-rectangle "Sistema de Matrículas" {
-
-  usecase "Autenticar no sistema" as UC1
-  usecase "Consultar disciplinas ofertadas" as UC2
-  usecase "Matricular-se em disciplina" as UC3
-  usecase "Matricular-se em disciplina obrigatória" as UC3A
-  usecase "Matricular-se em disciplina optativa" as UC3B
-  usecase "Cancelar matrícula" as UC4
-  usecase "Consultar matrículas realizadas" as UC5
-
-  usecase "Verificar disponibilidade de vagas" as UC6
-  usecase "Validar limite de disciplinas do aluno" as UC7
-  usecase "Notificar sistema de cobrança" as UC8
-
-  usecase "Cadastrar curso" as UC9
-  usecase "Cadastrar disciplina" as UC10
-  usecase "Cadastrar professor" as UC11
-  usecase "Cadastrar aluno" as UC12
-  usecase "Gerar currículo do semestre" as UC13
-  usecase "Abrir período de matrículas" as UC14
-  usecase "Encerrar período de matrículas" as UC15
-  usecase "Verificar quórum mínimo da disciplina" as UC16
-  usecase "Cancelar disciplina sem quórum" as UC17
-
-  usecase "Consultar alunos matriculados" as UC18
-}
-
-Usuario --> UC1
-
-Aluno --> UC2
-Aluno --> UC3
-Aluno --> UC4
-Aluno --> UC5
-
-Professor --> UC18
-
-Secretaria --> UC9
-Secretaria --> UC10
-Secretaria --> UC11
-Secretaria --> UC12
-Secretaria --> UC13
-Secretaria --> UC14
-Secretaria --> UC15
-
-UC3A --|> UC3
-UC3B --|> UC3
-
-UC3 ..> UC6 : <<include>>
-UC3 ..> UC7 : <<include>>
-UC3 ..> UC8 : <<include>>
-UC4 ..> UC8 : <<include>>
-
-UC15 ..> UC16 : <<include>>
-UC17 ..> UC16 : <<extend>>
-
-UC8 --> Cobranca
-
-note right of UC6
-  Máximo de 60 alunos
-  por disciplina
-end note
-
-note right of UC7
-  Até 4 obrigatórias e
-  2 optativas por aluno
-end note
-
-note bottom of UC16
-  Mínimo de 3 alunos
-  por disciplina
-end note
-
-@enduml
-```
+Fonte PlantUML: [`docs/diagramas/diagrama-casos-de-uso.puml`](docs/diagramas/diagrama-casos-de-uso.puml)
+(pode ser renderizado em [plantuml.com](http://www.plantuml.com/plantuml/uml/) ou pela extensão do
+VS Code). As imagens de `docs/diagramas/` são exportadas a partir desses arquivos.
 
 ## Correções Aplicadas ao Diagrama de Casos de Uso
 
@@ -141,6 +46,17 @@ end note
 | 6 | As setas de `<<include>>`/`<<extend>>` usavam `.>` (linha tracejada curta), notação imprecisa | Padronizado para `..>`, a dependência tracejada da UML |
 | 7 | As regras numéricas (60 vagas, 3 alunos, limites por aluno) ficavam só na descrição textual | Adicionadas como *notes* nos casos de uso correspondentes |
 
+### Correções da Lab01S03
+
+| # | Problema na versão anterior | Correção |
+|---|---|---|
+| 8 | *Cancelar disciplina sem quórum* estendia *Verificar quórum*, que é um caso incluído, e não um caso base com ponto de extensão | Passa a estender **Encerrar período de matrículas**, que declara o ponto de extensão *sem quórum*; a condição fica em uma *note* |
+| 9 | O cancelamento de disciplina sem quórum cancela as matrículas, mas não avisava a cobrança | Adicionado `<<include>>` de *Cancelar disciplina sem quórum* para *Notificar sistema de cobrança* |
+| 10 | A exigência de período aberto para matricular e cancelar (HU06, HU15) não aparecia no diagrama | Incluído **Validar período de matrículas aberto** (UC21), com `<<include>>` a partir de matrícula e cancelamento |
+| 11 | O professor só consultava alunos de uma disciplina, mas não tinha como ver quais disciplinas leciona | Incluído **Consultar disciplinas que leciona** (UC20) |
+| 12 | Não havia como o usuário trocar a senha inicial definida pela secretaria | Incluído **Alterar senha** (UC19), associado ao ator Usuário |
+| 13 | A secretaria não tinha como consultar o que cadastrou (cursos, professores, alunos, disciplinas, currículos) | Incluído **Consultar cadastros** (UC22); a secretaria também passa a acionar diretamente *Verificar quórum* para acompanhar as turmas antes do encerramento |
+
 ## Descrição dos Casos de Uso
 
 | ID | Caso de Uso | Ator principal | Resumo | Classe responsável |
@@ -152,7 +68,7 @@ end note
 | UC5 | Consultar matrículas realizadas | Aluno | Aluno visualiza as disciplinas em que está matriculado | `ServicoMatricula.consultarMatriculas` |
 | UC6 | Verificar disponibilidade de vagas | Sistema | Verifica se a disciplina não atingiu o limite de 60 alunos | `Disciplina.temVagaDisponivel` |
 | UC7 | Validar limite de disciplinas do aluno | Sistema | Verifica os limites de 4 obrigatórias e 2 optativas por aluno | `Aluno.podeSeMatricularEm` |
-| UC8 | Notificar sistema de cobrança | Sistema | Notifica a cobrança após confirmação ou cancelamento de matrícula | `SistemaCobranca.notificarMatricula` |
+| UC8 | Notificar sistema de cobrança | Sistema | Notifica a cobrança após confirmação ou cancelamento de matrícula | `SistemaCobranca.notificarMatricula` / `notificarCancelamento` |
 | UC9 | Cadastrar curso | Secretaria | Cadastra nome e número de créditos de um curso | `ServicoSecretaria.cadastrarCurso` |
 | UC10 | Cadastrar disciplina | Secretaria | Associa disciplina a um curso e a um professor | `ServicoSecretaria.cadastrarDisciplina` |
 | UC11 | Cadastrar professor | Secretaria | Cadastra dados e senha de acesso do professor | `ServicoSecretaria.cadastrarProfessor` |
@@ -160,9 +76,13 @@ end note
 | UC13 | Gerar currículo do semestre | Secretaria | Define o conjunto de disciplinas ofertadas no semestre | `ServicoSecretaria.gerarCurriculo` |
 | UC14 | Abrir período de matrículas | Secretaria | Define a janela de tempo em que alunos podem matricular/cancelar | `ServicoSecretaria.abrirPeriodoMatriculas` |
 | UC15 | Encerrar período de matrículas | Secretaria | Fecha o período e dispara a verificação de quórum de cada disciplina | `ServicoSecretaria.encerrarPeriodoMatriculas` |
-| UC16 | Verificar quórum mínimo da disciplina | Sistema | Confere se a disciplina atingiu o mínimo de 3 alunos matriculados | `Disciplina.atingiuQuorumMinimo` |
-| UC17 | Cancelar disciplina sem quórum | Sistema | Cancela automaticamente disciplinas que não atingiram o mínimo de alunos | `Disciplina.cancelarPorFaltaDeQuorum` |
+| UC16 | Verificar quórum mínimo da disciplina | Secretaria / Sistema | Confere se a disciplina atingiu o mínimo de 3 alunos matriculados | `ServicoSecretaria.verificarQuoruns`, `Disciplina.atingiuQuorumMinimo` |
+| UC17 | Cancelar disciplina sem quórum | Sistema | Estende o encerramento: cancela a disciplina e suas matrículas, notificando a cobrança | `Disciplina.cancelarPorFaltaDeQuorum` |
 | UC18 | Consultar alunos matriculados | Professor | Lista os alunos matriculados em uma disciplina do professor | `ServicoProfessor.consultarAlunosMatriculados` |
+| UC19 | Alterar senha | Usuário | Troca a senha informando a senha atual | `ServicoAutenticacao.alterarSenha` |
+| UC20 | Consultar disciplinas que leciona | Professor | Lista as disciplinas do professor com situação e número de matriculados | `ServicoProfessor.consultarDisciplinas` |
+| UC21 | Validar período de matrículas aberto | Sistema | Garante que matrícula e cancelamento ocorram só dentro do período vigente | `ServicoMatricula.validarPeriodoAberto` |
+| UC22 | Consultar cadastros | Secretaria | Lista cursos, professores, alunos, disciplinas, currículos e períodos | `cli.MenuConsultas` |
 
 ## Histórias de Usuário
 
@@ -227,13 +147,33 @@ canceladas automaticamente.
 
 ## Diagrama de Classes
 
-Fonte PlantUML: [`docs/diagramas/diagrama-classes.puml`](docs/diagramas/diagrama-classes.puml)
+O diagrama foi dividido em dois para continuar legível:
+
+- **Domínio, serviços, repositórios, integração e exceções** —
+  [`diagrama-classes.puml`](docs/diagramas/diagrama-classes.puml) ·
+  [imagem](docs/diagramas/DiagramaClasses.png)
+- **Protótipo: persistência em arquivos e interface de linha de comando** —
+  [`diagrama-classes-prototipo.puml`](docs/diagramas/diagrama-classes-prototipo.puml) ·
+  [imagem](docs/diagramas/DiagramaClassesPrototipo.png)
+
+### Correções da Lab01S03
+
+| # | Problema na versão anterior | Correção |
+|---|---|---|
+| 1 | `Disciplina "1" -- "3..60" Matricula`: durante o período uma disciplina pode ter 0, 1 ou 2 alunos; o quórum só é exigido no encerramento | Multiplicidade `*`; os limites (máx. 60 ativas, mín. 3 para confirmar) ficam em uma *note* |
+| 2 | `Aluno "1" -- "0..6" Matricula`: matrículas canceladas permanecem como histórico, então um aluno pode ter mais de 6 objetos `Matricula` | Multiplicidade `*`; o limite de 4 + 2 vale para matrículas **ativas** (*note*) |
+| 3 | `Curriculo "1" o-- "*" Disciplina` impedia uma disciplina de constar em mais de um currículo, e permitia currículo vazio | `Curriculo "*" o-- "1..*" Disciplina` |
+| 4 | `MatriculaException <<RuntimeException>>` usava estereótipo para representar herança | Generalização `RuntimeException <\|-- MatriculaException` |
+| 5 | `ServicoSecretaria` cancela matrículas no encerramento, mas não dependia de `RepositorioMatricula` nem de `SistemaCobranca` | Dependências adicionadas; `encerrarPeriodoMatriculas` retorna as disciplinas canceladas |
+| 6 | `Usuario.senha` sugeria senha em texto puro | Atributo `hashSenha` (SHA-256) |
+| 7 | Métodos necessários à implementação não estavam modelados | Adicionados `Disciplina.abrirParaMatricula`, `Aluno.buscarMatriculaAtiva`, `Professor.adicionarDisciplina`, `ServicoAutenticacao.alterarSenha`, `RepositorioUsuario.buscarPorPerfil`, `CadastroInvalidoException` |
+| 8 | Não havia camada de persistência nem de interface | Pacotes `persistencia` e `cli` no diagrama do protótipo |
 
 ### Pacote `modelo` — entidades do domínio
 
 | Classe | Responsabilidade | Principais atributos |
 |---|---|---|
-| `Usuario` *(abstrata)* | Base de autenticação de todos os perfis | `id`, `nome`, `login`, `senha` |
+| `Usuario` *(abstrata)* | Base de autenticação de todos os perfis | `id`, `nome`, `login`, `hashSenha` |
 | `Aluno` | Matricula-se e cancela matrículas | `matricula`, `curso`, `matriculas` |
 | `Professor` | Consulta suas disciplinas e alunos | `siape`, `departamento`, `disciplinas` |
 | `Secretaria` | Perfil administrativo | `setor` |
@@ -252,19 +192,21 @@ Fonte PlantUML: [`docs/diagramas/diagrama-classes.puml`](docs/diagramas/diagrama
 |---|---|
 | `servico` | `ServicoAutenticacao`, `ServicoMatricula`, `ServicoSecretaria`, `ServicoProfessor` — orquestram os casos de uso |
 | `repositorio` | `Repositorio<T, ID>` e as interfaces específicas de cada entidade |
-| `integracao` | `SistemaCobranca` (porta para o ator externo) e `SistemaCobrancaAdapter` |
+| `integracao` | `SistemaCobranca` (porta para o ator externo) e `SistemaCobrancaAdapter`, que grava a remessa em arquivo |
 | `excecao` | `MatriculaException` e as exceções de regra de negócio derivadas dela |
+| `persistencia` | `RepositorioArquivo<T>` e as implementações dos repositórios em arquivo texto |
+| `cli` | `TelaInicial`, `Menu` e os menus de aluno, professor e secretaria |
 
 ### Relacionamentos e multiplicidades
 
 | Relacionamento | Multiplicidade | Observação |
 |---|---|---|
-| `Aluno` — `Matricula` | 1 para 0..6 | Até 4 obrigatórias + 2 optativas |
-| `Disciplina` — `Matricula` | 1 para 3..60 | Quórum mínimo e limite de vagas |
+| `Aluno` — `Matricula` | 1 para * | Até 4 obrigatórias + 2 optativas **ativas**; canceladas ficam no histórico |
+| `Disciplina` — `Matricula` | 1 para * | Até 60 **ativas**; mínimo de 3 para ser confirmada no encerramento |
 | `Aluno` — `Curso` | * para 1 | Aluno pertence a um curso |
 | `Curso` — `Disciplina` | 1 para * | Agregação |
 | `Professor` — `Disciplina` | 1 para * | Professor responsável |
-| `Curriculo` — `Disciplina` | 1 para * | Agregação das disciplinas do semestre |
+| `Curriculo` — `Disciplina` | * para 1..* | Agregação das disciplinas do semestre |
 | `Usuario` → `Aluno`/`Professor`/`Secretaria` | herança | Generalização dos perfis |
 
 ## Regras de Negócio no Modelo
@@ -277,53 +219,23 @@ Fonte PlantUML: [`docs/diagramas/diagrama-classes.puml`](docs/diagramas/diagrama
 | Até 2 disciplinas optativas por aluno | `TipoDisciplina.OPTATIVA.getLimitePorAluno()` |
 | Matrícula só dentro do período vigente | `PeriodoMatricula.estaAberto()` e `ServicoMatricula.validarPeriodoAberto()` |
 | Cancelamento automático sem quórum | `Disciplina.cancelarPorFaltaDeQuorum()`, disparado por `ServicoSecretaria.encerrarPeriodoMatriculas()` |
-| Notificação da cobrança após matrícula | `SistemaCobranca.notificarMatricula()` |
+| Notificação da cobrança após matrícula e cancelamento | `SistemaCobranca.notificarMatricula()` / `notificarCancelamento()` |
+| Matrícula só em disciplina do currículo do curso do aluno | `ServicoMatricula.validarOferta()` |
+| Sem matrícula duplicada na mesma disciplina | `Aluno.estaMatriculadoEm()` → `MatriculaDuplicadaException` |
 
-## Projeto Java
+## Protótipo (Lab01S03)
 
-Projeto Maven com Java 17. Nesta etapa as classes contêm **atributos, construtores, acessores e
-stubs dos métodos modelados** — os métodos de negócio lançam `UnsupportedOperationException`.
+Protótipo funcional em Java 17 com **interface em linha de comando** e **persistência em arquivos
+texto**. Todas as funcionalidades dos casos de uso estão utilizáveis pelos menus de cada perfil.
 
-### Estrutura
+### Como executar
 
-```
-sistema-matriculas/
-├── pom.xml
-├── docs/diagramas/
-│   ├── diagrama-casos-de-uso.puml
-│   └── diagrama-classes.puml
-└── src/main/java/matriculas/
-    ├── Aplicacao.java
-    ├── modelo/
-    │   ├── Usuario.java          ├── Curso.java
-    │   ├── Aluno.java            ├── Disciplina.java
-    │   ├── Professor.java        ├── Matricula.java
-    │   ├── Secretaria.java       ├── Curriculo.java
-    │   ├── TipoDisciplina.java   ├── PeriodoMatricula.java
-    │   ├── StatusDisciplina.java └── StatusMatricula.java
-    ├── servico/
-    │   ├── ServicoAutenticacao.java   ├── ServicoSecretaria.java
-    │   └── ServicoMatricula.java      └── ServicoProfessor.java
-    ├── repositorio/
-    │   ├── Repositorio.java              ├── RepositorioDisciplina.java
-    │   ├── RepositorioUsuario.java       ├── RepositorioMatricula.java
-    │   ├── RepositorioCurso.java         ├── RepositorioCurriculo.java
-    │   └── RepositorioPeriodoMatricula.java
-    ├── integracao/
-    │   ├── SistemaCobranca.java
-    │   └── SistemaCobrancaAdapter.java
-    └── excecao/
-        ├── MatriculaException.java              ├── MatriculaDuplicadaException.java
-        ├── AutenticacaoException.java           ├── DisciplinaIndisponivelException.java
-        ├── PeriodoFechadoException.java         ├── EntidadeNaoEncontradaException.java
-        ├── SemVagaDisponivelException.java      └── LimiteDisciplinasExcedidoException.java
-```
-
-### Compilação
+Com Maven:
 
 ```bash
 mvn compile
 mvn exec:java -Dexec.mainClass=matriculas.Aplicacao
+mvn test
 ```
 
 Sem Maven instalado:
@@ -333,4 +245,100 @@ javac -encoding UTF-8 -d target/classes $(find src/main/java -name '*.java')
 java -cp target/classes matriculas.Aplicacao
 ```
 
----
+Os dados são gravados na pasta `dados/` do diretório de execução. Outra pasta pode ser informada
+como argumento (`java -cp target/classes matriculas.Aplicacao outra-pasta`). Para recomeçar do zero,
+basta apagar a pasta.
+
+### Dados de exemplo e usuários
+
+Na primeira execução (pasta de dados vazia) o sistema grava dados de exemplo: os cursos ES e CC,
+10 disciplinas, o currículo de **2026/2**, o período de matrículas aberto (de 7 dias atrás até daqui
+a 30 dias) e algumas matrículas.
+
+| Perfil | Login | Senha | Observação |
+|---|---|---|---|
+| Secretaria | `admin` | `admin` | Acesso a cadastros, currículo e período |
+| Professor | `joao`, `maria`, `paulo` | `123` | João leciona ES101, ES105, ES201 e CC101 |
+| Aluno | `ana` | `123` | Engenharia de Software; já matriculada em ES101, ES104 e ES201 |
+| Aluno | `bruno`, `carla`, `diego` | `123` | Engenharia de Software (bruno e carla já em ES101) |
+| Aluno | `elisa` | `123` | Ciência da Computação |
+
+### Funcionalidades por perfil
+
+| Perfil | Menu | Caso de uso |
+|---|---|---|
+| Todos | Entrar / Sair (logout) / Alterar senha | UC1, UC19 |
+| Aluno | Consultar disciplinas ofertadas (com vagas restantes) | UC2 |
+| Aluno | Matricular-se em disciplina | UC3, UC6, UC7, UC8, UC21 |
+| Aluno | Cancelar matrícula | UC4, UC8, UC21 |
+| Aluno | Consultar minhas matrículas (inclui canceladas) | UC5 |
+| Professor | Consultar minhas disciplinas | UC20 |
+| Professor | Consultar alunos matriculados | UC18 |
+| Secretaria | Cadastrar curso, professor, aluno e disciplina | UC9–UC12 |
+| Secretaria | Gerar currículo do semestre | UC13 |
+| Secretaria | Abrir / encerrar período de matrículas | UC14, UC15, UC17 |
+| Secretaria | Verificar quórum das disciplinas | UC16 |
+| Secretaria | Consultar cadastros (cursos, professores, alunos, disciplinas, currículos, períodos) | UC22 |
+
+Violações de regra (limite de disciplinas, turma lotada, período fechado, matrícula duplicada etc.)
+são exibidas como `[ERRO] mensagem` e o menu continua disponível.
+
+### Roteiro sugerido de demonstração
+
+1. Entre como `ana` e tente se matricular em mais duas obrigatórias (ex.: ES102 e ES103) e depois em
+   ES105: a terceira é recusada pelo limite de 4 obrigatórias.
+2. Cancele uma matrícula e consulte "minhas matrículas": a cancelada aparece com data de cancelamento.
+3. Entre como `joao` e consulte os alunos de ES101.
+4. Entre como `admin`, use "Verificar quórum" e depois "Encerrar período": ES101 (3 alunos) é
+   confirmada e as disciplinas com menos de 3 alunos são canceladas, junto com suas matrículas.
+5. Feche e abra o programa novamente: todos os dados continuam lá. O arquivo `dados/cobranca.txt`
+   mostra as notificações enviadas ao sistema de cobrança.
+
+### Persistência em arquivos
+
+Cada repositório (`persistencia.Repositorio*Arquivo`) mantém as entidades em memória e regrava seu
+arquivo a cada alteração, uma entidade por linha, campos separados por `;` (caracteres especiais são
+escapados com `\`). As referências entre entidades são gravadas pelo id e resolvidas na carga, na
+ordem cursos → usuários → disciplinas → currículos → períodos → matrículas.
+
+| Arquivo | Conteúdo (campos) |
+|---|---|
+| `cursos.txt` | id; código; nome; créditos |
+| `usuarios.txt` | id; perfil; nome; login; hash SHA-256 da senha; matrícula/SIAPE/setor; curso/departamento |
+| `disciplinas.txt` | id; código; nome; créditos; tipo; situação; id do curso; id do professor |
+| `curriculos.txt` | id; semestre; id do curso; ids das disciplinas |
+| `periodos.txt` | id; semestre; início; fim; aberto |
+| `matriculas.txt` | id; id do aluno; id da disciplina; data da matrícula; data do cancelamento; situação |
+| `cobranca.txt` | remessa ao sistema de cobrança: data/hora; MATRICULA ou CANCELAMENTO; aluno; disciplina; créditos |
+
+### Estrutura
+
+```
+sistema-matriculas/
+├── pom.xml
+├── docs/diagramas/                 fontes .puml e imagens exportadas
+├── src/main/java/matriculas/
+│   ├── Aplicacao.java              ponto de entrada: monta repositórios, serviços e a CLI
+│   ├── DadosIniciais.java          dados de exemplo da primeira execução
+│   ├── modelo/                     entidades e regras de negócio
+│   ├── servico/                    casos de uso
+│   ├── repositorio/                interfaces dos repositórios
+│   ├── persistencia/               repositórios em arquivo texto
+│   ├── integracao/                 sistema de cobrança (remessa em arquivo)
+│   ├── excecao/                    exceções de regra de negócio
+│   └── cli/                        telas e menus da linha de comando
+└── src/test/java/matriculas/       testes JUnit 5 das regras e da persistência
+```
+
+### Testes
+
+`SistemaMatriculasTest` (JUnit 5) cobre autenticação, limites de 4 obrigatórias e 2 optativas,
+matrícula duplicada, limite de 60 vagas, oferta restrita ao currículo do curso, cancelamento com
+notificação à cobrança, encerramento do período com confirmação/cancelamento por quórum, acesso do
+professor apenas às suas turmas e a recarga completa dos dados a partir dos arquivos.
+
+### Limitações do protótipo
+
+- Uma disciplina tem uma única oferta: após confirmada ou cancelada, não volta a ser ofertada.
+- Os limites por aluno contam as matrículas ativas; não há separação por semestre.
+- O sistema de cobrança é simulado por um arquivo de remessa.
