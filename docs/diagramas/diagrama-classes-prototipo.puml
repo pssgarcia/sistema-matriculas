@@ -1,0 +1,179 @@
+@startuml DiagramaClassesPrototipo
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+' Classes do protótipo: persistência em arquivos e interface de linha de comando.
+' O domínio, os serviços e as interfaces de repositório estão em diagrama-classes.puml.
+
+package "repositorio" {
+  interface "Repositorio<T, ID>" as Repositorio
+  interface RepositorioUsuario
+  interface RepositorioCurso
+  interface RepositorioDisciplina
+  interface RepositorioMatricula
+  interface RepositorioCurriculo
+  interface RepositorioPeriodoMatricula
+}
+
+package "persistencia" {
+
+  abstract class "RepositorioArquivo<T>" as RepositorioArquivo {
+    - arquivo : Path
+    - entidades : Map<Long, T>
+    - proximoId : long
+    # carregar() : void
+    # {abstract} idDe(entidade : T) : Long
+    # {abstract} atribuirId(entidade : T, id : Long) : void
+    # {abstract} serializar(entidade : T) : String
+    # {abstract} desserializar(campos : String[]) : T
+    + salvar(entidade : T) : T
+    + buscarPorId(id : Long) : Optional<T>
+    + buscarTodos() : List<T>
+    + remover(id : Long) : void
+    - persistir() : void
+  }
+
+  class RepositorioCursoArquivo
+  class RepositorioUsuarioArquivo
+  class RepositorioDisciplinaArquivo
+  class RepositorioCurriculoArquivo
+  class RepositorioPeriodoMatriculaArquivo
+  class RepositorioMatriculaArquivo
+
+  class FormatoArquivo <<utilitário>> {
+    + {static} SEPARADOR : char = ';'
+    + {static} juntar(campos : Object...) : String
+    + {static} separar(linha : String) : String[]
+  }
+
+  class GravacaoArquivo <<utilitário>> {
+    + {static} comNovasTentativas(arquivo : Path, gravacao : Gravacao) : void
+  }
+
+  class PersistenciaException <<RuntimeException>>
+}
+
+package "integracao" {
+  interface SistemaCobranca
+  class SistemaCobrancaAdapter {
+    - arquivoRemessa : Path
+  }
+}
+
+package "cli" {
+
+  class TelaInicial {
+    + executar() : void
+    - entrar() : void
+    - menuDo(usuario : Usuario) : Menu
+  }
+
+  abstract class Menu {
+    # contexto : Contexto
+    + executar() : void
+    # {abstract} titulo() : String
+    # {abstract} opcoes() : List<Opcao>
+    # alterarSenha(usuario : Usuario) : void
+  }
+
+  class MenuAluno {
+    - aluno : Aluno
+  }
+  class MenuProfessor {
+    - professor : Professor
+  }
+  class MenuSecretaria {
+    - secretaria : Secretaria
+  }
+  class MenuConsultas
+
+  class Contexto <<record>> {
+    + disciplinaPorCodigo(codigo : String) : Disciplina
+    + cursoPorCodigo(codigo : String) : Curso
+  }
+
+  class Console {
+    + lerTexto(rotulo : String) : String
+    + lerInteiro(rotulo : String) : int
+    + lerOpcao(maior : int) : int
+    + lerData(rotulo : String, padrao : LocalDate) : LocalDate
+    + confirmar(pergunta : String) : boolean
+    + tabela(cabecalho : List<String>, linhas : List<List<String>>) : void
+  }
+}
+
+package "servico" {
+  class ServicoAutenticacao
+  class ServicoMatricula
+  class ServicoSecretaria
+  class ServicoProfessor
+}
+
+class Aplicacao {
+  + {static} main(args : String[]) : void
+  ~ {static} montar(pastaDados : Path, console : Console) : Contexto
+}
+
+class DadosIniciais {
+  + {static} carregar(repositorioUsuario, secretaria, servicoMatricula) : void
+}
+
+' ---------- Persistência ----------
+Repositorio <|.. RepositorioArquivo
+RepositorioArquivo <|-- RepositorioCursoArquivo
+RepositorioArquivo <|-- RepositorioUsuarioArquivo
+RepositorioArquivo <|-- RepositorioDisciplinaArquivo
+RepositorioArquivo <|-- RepositorioCurriculoArquivo
+RepositorioArquivo <|-- RepositorioPeriodoMatriculaArquivo
+RepositorioArquivo <|-- RepositorioMatriculaArquivo
+
+RepositorioCurso <|.. RepositorioCursoArquivo
+RepositorioUsuario <|.. RepositorioUsuarioArquivo
+RepositorioDisciplina <|.. RepositorioDisciplinaArquivo
+RepositorioCurriculo <|.. RepositorioCurriculoArquivo
+RepositorioPeriodoMatricula <|.. RepositorioPeriodoMatriculaArquivo
+RepositorioMatricula <|.. RepositorioMatriculaArquivo
+
+RepositorioUsuarioArquivo ..> RepositorioCurso : resolve curso do aluno >
+RepositorioDisciplinaArquivo ..> RepositorioCurso
+RepositorioDisciplinaArquivo ..> RepositorioUsuario : resolve professor >
+RepositorioCurriculoArquivo ..> RepositorioDisciplina
+RepositorioMatriculaArquivo ..> RepositorioUsuario
+RepositorioMatriculaArquivo ..> RepositorioDisciplina
+
+RepositorioArquivo ..> FormatoArquivo
+RepositorioArquivo ..> GravacaoArquivo
+RepositorioArquivo ..> PersistenciaException
+SistemaCobranca <|.. SistemaCobrancaAdapter
+SistemaCobrancaAdapter ..> GravacaoArquivo
+
+note bottom of RepositorioArquivo
+  Um arquivo texto por entidade em dados/
+  (cursos.txt, usuarios.txt, disciplinas.txt,
+  curriculos.txt, periodos.txt, matriculas.txt).
+  Referências gravadas por id e resolvidas na carga.
+end note
+
+' ---------- Interface ----------
+Menu <|-- MenuAluno
+Menu <|-- MenuProfessor
+Menu <|-- MenuSecretaria
+Menu <|-- MenuConsultas
+MenuSecretaria ..> MenuConsultas
+TelaInicial ..> Menu : cria conforme o perfil >
+TelaInicial --> Contexto
+Menu --> Contexto
+Contexto --> Console
+Contexto --> ServicoAutenticacao
+Contexto --> ServicoMatricula
+Contexto --> ServicoSecretaria
+Contexto --> ServicoProfessor
+
+' ---------- Inicialização ----------
+Aplicacao ..> RepositorioArquivo : instancia >
+Aplicacao ..> SistemaCobrancaAdapter : instancia >
+Aplicacao ..> TelaInicial
+Aplicacao ..> DadosIniciais : primeira execução >
+
+@enduml

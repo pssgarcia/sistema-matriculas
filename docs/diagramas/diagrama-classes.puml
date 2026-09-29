@@ -10,16 +10,18 @@ package "modelo" {
     - id : Long
     - nome : String
     - login : String
-    - senha : String
+    - hashSenha : String
     + autenticar(senha : String) : boolean
     + alterarSenha(senhaAtual : String, novaSenha : String) : void
     + {abstract} getPerfil() : String
+    - {static} gerarHash(senha : String) : String
   }
 
   class Aluno {
     - matricula : String
     + matricularEm(disciplina : Disciplina) : Matricula
     + cancelarMatricula(disciplina : Disciplina) : void
+    + buscarMatriculaAtiva(disciplina : Disciplina) : Optional<Matricula>
     + consultarMatriculasAtivas() : List<Matricula>
     + consultarDisciplinasMatriculadas() : List<Disciplina>
     + podeSeMatricularEm(disciplina : Disciplina) : boolean
@@ -33,6 +35,7 @@ package "modelo" {
     + consultarAlunosMatriculados(disciplina : Disciplina) : List<Aluno>
     + consultarDisciplinas() : List<Disciplina>
     + lecionaDisciplina(disciplina : Disciplina) : boolean
+    + adicionarDisciplina(disciplina : Disciplina) : void
   }
 
   class Secretaria {
@@ -65,6 +68,7 @@ package "modelo" {
     + adicionarMatricula(matricula : Matricula) : void
     + removerMatricula(matricula : Matricula) : void
     + listarAlunosMatriculados() : List<Aluno>
+    + abrirParaMatricula() : void
     + ativar() : void
     + cancelarPorFaltaDeQuorum() : void
     + estaDisponivelParaMatricula() : boolean
@@ -123,8 +127,11 @@ package "modelo" {
 package "servico" {
 
   class ServicoAutenticacao {
+    - usuarioLogado : Usuario
     + autenticar(login : String, senha : String) : Usuario
     + encerrarSessao(usuario : Usuario) : void
+    + alterarSenha(usuario : Usuario, senhaAtual : String, novaSenha : String) : void
+    + getUsuarioLogado() : Optional<Usuario>
   }
 
   class ServicoMatricula {
@@ -132,7 +139,8 @@ package "servico" {
     + matricular(aluno : Aluno, disciplina : Disciplina) : Matricula
     + cancelarMatricula(aluno : Aluno, disciplina : Disciplina) : void
     + consultarMatriculas(aluno : Aluno) : List<Matricula>
-    - validarPeriodoAberto() : void
+    - validarPeriodoAberto() : PeriodoMatricula
+    - validarOferta(aluno : Aluno, disciplina : Disciplina, periodo : PeriodoMatricula) : void
     - validarDisponibilidadeDeVagas(disciplina : Disciplina) : void
     - validarLimiteDeDisciplinas(aluno : Aluno, disciplina : Disciplina) : void
   }
@@ -144,7 +152,7 @@ package "servico" {
     + cadastrarAluno(nome : String, login : String, senha : String, matricula : String, curso : Curso) : Aluno
     + gerarCurriculo(curso : Curso, semestre : String, disciplinas : List<Disciplina>) : Curriculo
     + abrirPeriodoMatriculas(semestre : String, inicio : LocalDate, fim : LocalDate) : PeriodoMatricula
-    + encerrarPeriodoMatriculas(semestre : String) : void
+    + encerrarPeriodoMatriculas(semestre : String) : List<Disciplina>
     + verificarQuoruns(semestre : String) : List<Disciplina>
   }
 
@@ -156,7 +164,7 @@ package "servico" {
 
 package "repositorio" {
 
-  interface Repositorio<T, ID> {
+  interface "Repositorio<T, ID>" as Repositorio {
     + salvar(entidade : T) : T
     + buscarPorId(id : ID) : Optional<T>
     + buscarTodos() : List<T>
@@ -165,6 +173,7 @@ package "repositorio" {
 
   interface RepositorioUsuario {
     + buscarPorLogin(login : String) : Optional<Usuario>
+    + buscarPorPerfil(perfil : Class<U>) : List<U>
   }
 
   interface RepositorioCurso {
@@ -202,7 +211,7 @@ package "integracao" {
   }
 
   class SistemaCobrancaAdapter {
-    - urlServico : String
+    - arquivoRemessa : Path
     + notificarMatricula(matricula : Matricula) : void
     + notificarCancelamento(matricula : Matricula) : void
   }
@@ -210,7 +219,8 @@ package "integracao" {
 
 package "excecao" {
 
-  class MatriculaException <<RuntimeException>>
+  class RuntimeException
+  class MatriculaException
   class AutenticacaoException
   class PeriodoFechadoException
   class SemVagaDisponivelException
@@ -218,13 +228,15 @@ package "excecao" {
   class MatriculaDuplicadaException
   class DisciplinaIndisponivelException
   class EntidadeNaoEncontradaException
+  class CadastroInvalidoException
 }
 
-' ---------- Herança ----------
+' ---------- Herança e realização ----------
 Usuario <|-- Aluno
 Usuario <|-- Professor
 Usuario <|-- Secretaria
 
+RuntimeException <|-- MatriculaException
 MatriculaException <|-- AutenticacaoException
 MatriculaException <|-- PeriodoFechadoException
 MatriculaException <|-- SemVagaDisponivelException
@@ -232,8 +244,10 @@ MatriculaException <|-- LimiteDisciplinasExcedidoException
 MatriculaException <|-- MatriculaDuplicadaException
 MatriculaException <|-- DisciplinaIndisponivelException
 MatriculaException <|-- EntidadeNaoEncontradaException
+MatriculaException <|-- CadastroInvalidoException
 
 SistemaCobranca <|.. SistemaCobrancaAdapter
+
 Repositorio <|-- RepositorioUsuario
 Repositorio <|-- RepositorioCurso
 Repositorio <|-- RepositorioDisciplina
@@ -241,17 +255,27 @@ Repositorio <|-- RepositorioMatricula
 Repositorio <|-- RepositorioCurriculo
 Repositorio <|-- RepositorioPeriodoMatricula
 
+
 ' ---------- Associações do domínio ----------
-Aluno "1" -- "0..6" Matricula : realiza >
-Disciplina "1" -- "3..60" Matricula : possui >
+Aluno "1" -- "*" Matricula : realiza >
+Disciplina "1" -- "*" Matricula : possui >
 Aluno "*" --> "1" Curso : está vinculado a >
 Curso "1" o-- "*" Disciplina : oferece >
 Professor "1" -- "*" Disciplina : leciona >
-Curriculo "1" o-- "*" Disciplina : compõe >
+Curriculo "*" o-- "1..*" Disciplina : compõe >
 Curso "1" -- "*" Curriculo : tem >
 Disciplina --> TipoDisciplina
 Disciplina --> StatusDisciplina
 Matricula --> StatusMatricula
+
+note right of Matricula
+  Classe associativa entre Aluno e Disciplina.
+  Canceladas permanecem como histórico:
+  por aluno, no máximo 4 obrigatórias e
+  2 optativas ATIVAS; por disciplina,
+  no máximo 60 ATIVAS (mínimo de 3 para
+  ser confirmada no encerramento).
+end note
 
 ' ---------- Dependências dos serviços ----------
 ServicoAutenticacao ..> RepositorioUsuario
@@ -264,6 +288,8 @@ ServicoSecretaria ..> RepositorioDisciplina
 ServicoSecretaria ..> RepositorioUsuario
 ServicoSecretaria ..> RepositorioCurriculo
 ServicoSecretaria ..> RepositorioPeriodoMatricula
+ServicoSecretaria ..> RepositorioMatricula
+ServicoSecretaria ..> SistemaCobranca
 ServicoProfessor ..> RepositorioDisciplina
 ServicoProfessor ..> RepositorioMatricula
 
