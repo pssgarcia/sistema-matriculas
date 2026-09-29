@@ -2,8 +2,7 @@ package matriculas.integracao;
 
 import matriculas.modelo.Matricula;
 import matriculas.persistencia.FormatoArquivo;
-import matriculas.persistencia.PersistenciaException;
-import java.io.IOException;
+import matriculas.persistencia.GravacaoArquivo;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,15 +36,13 @@ public class SistemaCobrancaAdapter implements SistemaCobranca {
         String linha = FormatoArquivo.juntar(LocalDateTime.now(), evento, matricula.getAluno().getMatricula(),
                 matricula.getAluno().getNome(), matricula.getDisciplina().getCodigo(),
                 matricula.getDisciplina().getCreditos());
-        try {
+        GravacaoArquivo.comNovasTentativas(arquivoRemessa, () -> {
             if (arquivoRemessa.getParent() != null) {
                 Files.createDirectories(arquivoRemessa.getParent());
             }
             Files.write(arquivoRemessa, List.of(linha), StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            throw new PersistenciaException("Falha ao notificar o sistema de cobrança", e);
-        }
+        });
     }
 
     public Path getArquivoRemessa() {

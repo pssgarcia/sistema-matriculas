@@ -93,15 +93,13 @@ public abstract class RepositorioArquivo<T> implements Repositorio<T, Long> {
     private void persistir() {
         List<String> linhas = new ArrayList<>();
         entidades.values().forEach(entidade -> linhas.add(serializar(entidade)));
-        try {
+        GravacaoArquivo.comNovasTentativas(arquivo, () -> {
             if (arquivo.getParent() != null) {
                 Files.createDirectories(arquivo.getParent());
             }
             Path temporario = arquivo.resolveSibling(arquivo.getFileName() + ".tmp");
             Files.write(temporario, linhas, StandardCharsets.UTF_8);
             Files.move(temporario, arquivo, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new PersistenciaException("Falha ao gravar o arquivo " + arquivo, e);
-        }
+        });
     }
 }
