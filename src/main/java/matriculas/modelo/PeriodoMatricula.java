@@ -14,6 +14,9 @@ public class PeriodoMatricula {
     }
 
     public PeriodoMatricula(Long id, String semestre, LocalDate dataInicio, LocalDate dataFim) {
+        if (dataInicio != null && dataFim != null && dataFim.isBefore(dataInicio)) {
+            throw new IllegalArgumentException("A data de fim não pode ser anterior à data de início.");
+        }
         this.id = id;
         this.semestre = semestre;
         this.dataInicio = dataInicio;
@@ -21,19 +24,19 @@ public class PeriodoMatricula {
     }
 
     public void abrir() {
-        throw new UnsupportedOperationException("TODO: implementar abertura do período de matrículas");
+        this.aberto = true;
     }
 
     public void encerrar() {
-        throw new UnsupportedOperationException("TODO: implementar encerramento do período de matrículas");
+        this.aberto = false;
     }
 
     public boolean estaAberto() {
-        throw new UnsupportedOperationException("TODO: implementar verificação de período aberto");
+        return aberto && estaVigente(LocalDate.now());
     }
 
     public boolean estaVigente(LocalDate data) {
-        throw new UnsupportedOperationException("TODO: implementar verificação de vigência do período");
+        return !data.isBefore(dataInicio) && !data.isAfter(dataFim);
     }
 
     public Long getId() {

@@ -22,15 +22,19 @@ public class Curso {
     }
 
     public void adicionarDisciplina(Disciplina disciplina) {
-        throw new UnsupportedOperationException("TODO: implementar vínculo de disciplina ao curso");
+        if (!disciplinas.contains(disciplina)) {
+            disciplinas.add(disciplina);
+        }
     }
 
     public void removerDisciplina(Disciplina disciplina) {
-        throw new UnsupportedOperationException("TODO: implementar remoção de disciplina do curso");
+        disciplinas.remove(disciplina);
     }
 
     public List<Disciplina> listarDisciplinasPorTipo(TipoDisciplina tipo) {
-        throw new UnsupportedOperationException("TODO: implementar filtro de disciplinas por tipo");
+        return disciplinas.stream()
+                .filter(disciplina -> disciplina.getTipo() == tipo)
+                .toList();
     }
 
     public Long getId() {

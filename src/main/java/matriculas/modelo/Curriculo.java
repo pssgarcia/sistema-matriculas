@@ -20,19 +20,23 @@ public class Curriculo {
     }
 
     public void adicionarDisciplina(Disciplina disciplina) {
-        throw new UnsupportedOperationException("TODO: implementar inclusão de disciplina no currículo");
+        if (!contemDisciplina(disciplina)) {
+            disciplinas.add(disciplina);
+        }
     }
 
     public void removerDisciplina(Disciplina disciplina) {
-        throw new UnsupportedOperationException("TODO: implementar remoção de disciplina do currículo");
+        disciplinas.remove(disciplina);
     }
 
     public List<Disciplina> listarDisciplinasComVaga() {
-        throw new UnsupportedOperationException("TODO: implementar listagem de disciplinas com vaga");
+        return disciplinas.stream()
+                .filter(Disciplina::estaDisponivelParaMatricula)
+                .toList();
     }
 
     public boolean contemDisciplina(Disciplina disciplina) {
-        throw new UnsupportedOperationException("TODO: implementar verificação de disciplina no currículo");
+        return disciplinas.contains(disciplina);
     }
 
     public Long getId() {

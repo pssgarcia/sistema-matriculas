@@ -1,5 +1,9 @@
 package matriculas.modelo;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.Objects;
 
 public abstract class Usuario {
@@ -7,7 +11,7 @@ public abstract class Usuario {
     private Long id;
     private String nome;
     private String login;
-    private String senha;
+    private String hashSenha;
 
     protected Usuario() {
     }
@@ -16,18 +20,36 @@ public abstract class Usuario {
         this.id = id;
         this.nome = nome;
         this.login = login;
-        this.senha = senha;
+        this.hashSenha = gerarHash(senha);
     }
 
     public boolean autenticar(String senha) {
-        throw new UnsupportedOperationException("TODO: implementar autenticação do usuário");
+        return senha != null && hashSenha != null && hashSenha.equals(gerarHash(senha));
     }
 
     public void alterarSenha(String senhaAtual, String novaSenha) {
-        throw new UnsupportedOperationException("TODO: implementar alteração de senha");
+        if (!autenticar(senhaAtual)) {
+            throw new IllegalArgumentException("Senha atual incorreta.");
+        }
+        if (novaSenha == null || novaSenha.isBlank()) {
+            throw new IllegalArgumentException("A nova senha não pode ser vazia.");
+        }
+        this.hashSenha = gerarHash(novaSenha);
     }
 
     public abstract String getPerfil();
+
+    private static String gerarHash(String senha) {
+        if (senha == null) {
+            return null;
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(senha.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Algoritmo SHA-256 indisponível", e);
+        }
+    }
 
     public Long getId() {
         return id;
@@ -53,12 +75,12 @@ public abstract class Usuario {
         this.login = login;
     }
 
-    protected String getSenha() {
-        return senha;
+    public String getHashSenha() {
+        return hashSenha;
     }
 
-    protected void setSenha(String senha) {
-        this.senha = senha;
+    public void setHashSenha(String hashSenha) {
+        this.hashSenha = hashSenha;
     }
 
     @Override

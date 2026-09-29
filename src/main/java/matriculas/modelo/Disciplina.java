@@ -33,43 +33,61 @@ public class Disciplina {
     }
 
     public boolean temVagaDisponivel() {
-        throw new UnsupportedOperationException("TODO: implementar verificação de vagas disponíveis");
+        return getTotalMatriculados() < MAXIMO_ALUNOS;
     }
 
     public boolean atingiuQuorumMinimo() {
-        throw new UnsupportedOperationException("TODO: implementar verificação de quórum mínimo");
+        return getTotalMatriculados() >= MINIMO_ALUNOS;
     }
 
     public int getTotalMatriculados() {
-        throw new UnsupportedOperationException("TODO: implementar contagem de matrículas ativas");
+        return (int) matriculas.stream().filter(Matricula::estaAtiva).count();
     }
 
     public int getVagasRestantes() {
-        throw new UnsupportedOperationException("TODO: implementar cálculo de vagas restantes");
+        return Math.max(0, MAXIMO_ALUNOS - getTotalMatriculados());
     }
 
     public void adicionarMatricula(Matricula matricula) {
-        throw new UnsupportedOperationException("TODO: implementar inclusão de matrícula na disciplina");
+        if (!matriculas.contains(matricula)) {
+            matriculas.add(matricula);
+        }
     }
 
     public void removerMatricula(Matricula matricula) {
-        throw new UnsupportedOperationException("TODO: implementar remoção de matrícula da disciplina");
+        matriculas.remove(matricula);
     }
 
     public List<Aluno> listarAlunosMatriculados() {
-        throw new UnsupportedOperationException("TODO: implementar listagem de alunos matriculados");
+        return matriculas.stream()
+                .filter(Matricula::estaAtiva)
+                .map(Matricula::getAluno)
+                .toList();
+    }
+
+    public void abrirParaMatricula() {
+        if (status == StatusDisciplina.PLANEJADA) {
+            status = StatusDisciplina.ABERTA;
+        }
     }
 
     public void ativar() {
-        throw new UnsupportedOperationException("TODO: implementar confirmação da disciplina");
+        if (status != StatusDisciplina.ABERTA) {
+            throw new IllegalStateException("Só é possível confirmar uma disciplina aberta para matrícula.");
+        }
+        status = StatusDisciplina.CONFIRMADA;
     }
 
     public void cancelarPorFaltaDeQuorum() {
-        throw new UnsupportedOperationException("TODO: implementar cancelamento por falta de quórum");
+        if (atingiuQuorumMinimo()) {
+            throw new IllegalStateException("A disciplina atingiu o quórum mínimo e não pode ser cancelada.");
+        }
+        matriculas.stream().filter(Matricula::estaAtiva).forEach(Matricula::cancelar);
+        status = StatusDisciplina.CANCELADA;
     }
 
     public boolean estaDisponivelParaMatricula() {
-        throw new UnsupportedOperationException("TODO: implementar verificação de disponibilidade para matrícula");
+        return status == StatusDisciplina.ABERTA && temVagaDisponivel();
     }
 
     public Long getId() {

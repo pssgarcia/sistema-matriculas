@@ -22,11 +22,15 @@ public class Matricula {
     }
 
     public void cancelar() {
-        throw new UnsupportedOperationException("TODO: implementar cancelamento da matrícula");
+        if (!estaAtiva()) {
+            throw new IllegalStateException("A matrícula já está cancelada.");
+        }
+        this.status = StatusMatricula.CANCELADA;
+        this.dataCancelamento = LocalDateTime.now();
     }
 
     public boolean estaAtiva() {
-        throw new UnsupportedOperationException("TODO: implementar verificação de matrícula ativa");
+        return status == StatusMatricula.ATIVA;
     }
 
     public Long getId() {

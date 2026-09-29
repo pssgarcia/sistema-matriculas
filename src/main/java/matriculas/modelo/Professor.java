@@ -19,15 +19,24 @@ public class Professor extends Usuario {
     }
 
     public List<Aluno> consultarAlunosMatriculados(Disciplina disciplina) {
-        throw new UnsupportedOperationException("TODO: implementar consulta de alunos matriculados");
+        if (!lecionaDisciplina(disciplina)) {
+            throw new IllegalArgumentException("O professor não leciona a disciplina " + disciplina.getCodigo());
+        }
+        return disciplina.listarAlunosMatriculados();
     }
 
     public List<Disciplina> consultarDisciplinas() {
-        throw new UnsupportedOperationException("TODO: implementar consulta de disciplinas do professor");
+        return List.copyOf(disciplinas);
     }
 
     public boolean lecionaDisciplina(Disciplina disciplina) {
-        throw new UnsupportedOperationException("TODO: implementar verificação de vínculo com a disciplina");
+        return disciplinas.contains(disciplina);
+    }
+
+    public void adicionarDisciplina(Disciplina disciplina) {
+        if (!disciplinas.contains(disciplina)) {
+            disciplinas.add(disciplina);
+        }
     }
 
     @Override
