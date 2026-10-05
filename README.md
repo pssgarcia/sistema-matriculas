@@ -230,6 +230,8 @@ texto**. Todas as funcionalidades dos casos de uso estão utilizáveis pelos men
 
 ### Como executar
 
+Requisito: JDK 17 ou superior instalado (`java -version`).
+
 Com Maven:
 
 ```bash
@@ -238,16 +240,62 @@ mvn exec:java -Dexec.mainClass=matriculas.Aplicacao
 mvn test
 ```
 
-Sem Maven instalado:
+Sem Maven instalado, em Linux/macOS ou Git Bash:
 
 ```bash
 javac -encoding UTF-8 -d target/classes $(find src/main/java -name '*.java')
 java -cp target/classes matriculas.Aplicacao
 ```
 
+Sem Maven instalado, no PowerShell (o `$(find ...)` do Bash não funciona nele):
+
+```powershell
+javac -encoding UTF-8 -d target/classes (Get-ChildItem -Recurse -Path src/main/java -Filter *.java).FullName
+java -cp target/classes matriculas.Aplicacao
+```
+
 Os dados são gravados na pasta `dados/` do diretório de execução. Outra pasta pode ser informada
 como argumento (`java -cp target/classes matriculas.Aplicacao outra-pasta`). Para recomeçar do zero,
 basta apagar a pasta.
+
+#### Acentos corrompidos no terminal (Windows)
+
+No Windows, dois problemas de codificação se somam e precisam ser corrigidos juntos:
+
+1. O **console do Windows** (usado até por terminais integrados como o do VS Code, inclusive com Git
+   Bash) normalmente não usa UTF-8 por padrão, mesmo em sessões novas. Se o *codepage* ativo não for
+   UTF-8 (65001), cada caractere acentuado (2 bytes em UTF-8) aparece como dois glifos errados — por
+   exemplo, `Matr\xC3\xADculas` em vez de `Matrículas`.
+2. O **Java** usa por padrão a codificação ANSI do sistema (`Cp1252`) para a entrada e saída padrão,
+   independente do *codepage* do console, o que também corrompe os acentos (aparecem como `?` ou `�`).
+
+Corrija os dois, nessa ordem, uma vez por sessão do terminal, antes de executar o sistema:
+
+PowerShell:
+
+```powershell
+chcp 65001
+$env:JDK_JAVA_OPTIONS = "-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dstdin.encoding=UTF-8"
+```
+
+cmd.exe:
+
+```cmd
+chcp 65001
+set JDK_JAVA_OPTIONS=-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dstdin.encoding=UTF-8
+```
+
+bash / Git Bash (inclusive o terminal integrado do VS Code):
+
+```bash
+chcp.com 65001
+export JDK_JAVA_OPTIONS="-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Dstdin.encoding=UTF-8"
+```
+
+Depois disso, tanto `mvn exec:java` quanto `java -cp target/classes matriculas.Aplicacao` exibem os
+acentos corretamente. A mensagem `NOTE: Picked up JDK_JAVA_OPTIONS...`, exibida uma vez no início, é
+apenas informativa e pode ser ignorada. Se abrir uma nova aba/janela de terminal, repita os dois
+comandos nela.
 
 ### Dados de exemplo e usuários
 
